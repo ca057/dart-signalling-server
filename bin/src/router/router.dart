@@ -2,12 +2,14 @@ import 'dart:io';
 
 class Router {
   String _baseDir;
+  Map _routingPatterns;
 
   Router(String webDirectory) {
     if (webDirectory.isEmpty) {
       throw new ArgumentError('The passed webDirectory is empty.');
     }
     _baseDir = webDirectory;
+    _routingPatterns = new Map();
   }
 
   get baseDirectory {
@@ -21,9 +23,21 @@ class Router {
     _baseDir = baseDirectory;
   }
 
+  get routingPatterns {
+    return _routingPatterns;
+  }
+
+  addRoute(String route, Function handler) {
+    return _routingPatterns.putIfAbsent(route, handler);
+  }
+
   handleRequest(HttpRequest req) async {
     String reqPath = req.uri.path;
     // check the path and what to do, if no pattern is matching, serve static files
+    print(reqPath);
+    if (_routingPatterns.containsKey(reqPath)) {
+      return _routingPatterns[reqPath]();
+    }
     await _serveStaticFiles(req);
   }
 
@@ -32,7 +46,7 @@ class Router {
     if (await file.exists()) {
       _serveFile(req, file);
     } else {
-      file = new File(file.path + "/index.html");
+      file = new File(file.path + "index.html");
       if (await file.exists()) {
         _serveFile(req, file);
       } else {

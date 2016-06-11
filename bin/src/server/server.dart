@@ -6,13 +6,11 @@ class Server {
   final InternetAddress _hostname;
   final int _port;
   HttpServer _server;
-  Router router;
+  Router _router;
 
   Server(InternetAddress hostname, int port)
       : _hostname = hostname,
-        _port = port {
-    router = new Router(new File(Platform.script.toFilePath()).parent.parent.path + '/web');
-  }
+        _port = port;
 
   get hostname {
     return _hostname;
@@ -29,14 +27,20 @@ class Server {
   run() async {
     _server = await _setupServer();
     print("Serving at ${_server.address}:${_server.port}");
+    _router.addRoute('/ws', () => _websocket);
+    print(_router.routingPatterns);
 
     await for (var request in _server) {
-      router.handleRequest(request);
+      _router.handleRequest(request);
     }
+  }
+
+  _websocket() {
   }
 
   _setupServer() {
     try {
+      _router = new Router(new File(Platform.script.toFilePath()).parent.parent.path + '/web');
       return HttpServer.bind(this._hostname, this._port);
     } catch (e) {
       print(e);
